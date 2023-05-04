@@ -24,8 +24,7 @@ FILER_WHITESPACE_COLOR = getattr(settings, 'FILER_WHITESPACE_COLOR', '#FFFFFF')
 
 FILER_0_8_COMPATIBILITY_MODE = getattr(settings, 'FILER_0_8_COMPATIBILITY_MODE', False)
 
-FILER_ENABLE_LOGGING = getattr(settings, 'FILER_ENABLE_LOGGING', False)
-if FILER_ENABLE_LOGGING:
+if FILER_ENABLE_LOGGING := getattr(settings, 'FILER_ENABLE_LOGGING', False):
     FILER_ENABLE_LOGGING = (
         FILER_ENABLE_LOGGING and (getattr(settings, 'LOGGING')
                              and ('' in settings.LOGGING['loggers']
@@ -46,11 +45,10 @@ FILER_ADMIN_ICON_SIZES = [str(i) for i in sorted([int(s) for s in _ICON_SIZES])]
 
 # Filer admin templates have specific icon sizes hardcoded: 32 and 48.
 _ESSENTIAL_ICON_SIZES = ('32', '48')
-if not all(x in FILER_ADMIN_ICON_SIZES for x in _ESSENTIAL_ICON_SIZES):
+if any(x not in FILER_ADMIN_ICON_SIZES for x in _ESSENTIAL_ICON_SIZES):
     logger.warn(
-        "FILER_ADMIN_ICON_SIZES has not all of the essential icon sizes "
-        "listed: {}. Some icons might be missing in admin templates.".format(
-            _ESSENTIAL_ICON_SIZES))
+        f"FILER_ADMIN_ICON_SIZES has not all of the essential icon sizes listed: {_ESSENTIAL_ICON_SIZES}. Some icons might be missing in admin templates."
+    )
 
 # This is an ordered iterable that describes a list of
 # classes that I should check for when adding files
@@ -194,7 +192,7 @@ def update_storage_settings(user_settings, defaults, s, t):
             user_settings[s][t]['UPLOAD_TO'] = defaults[s][t]['UPLOAD_TO']
         if 'UPLOAD_TO_PREFIX' not in user_settings[s][t]:
             user_settings[s][t]['UPLOAD_TO_PREFIX'] = defaults[s][t]['UPLOAD_TO_PREFIX']
-    if t == 'thumbnails':
+    elif t == 'thumbnails':
         if 'THUMBNAIL_OPTIONS' not in user_settings[s][t]:
             user_settings[s][t]['THUMBNAIL_OPTIONS'] = defaults[s][t]['THUMBNAIL_OPTIONS']
     return user_settings

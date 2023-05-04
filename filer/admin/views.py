@@ -36,16 +36,15 @@ def make_folder(request, folder_id=None):
     else:
         folder = None
 
-    if request.user.is_superuser:
-        pass
-    elif folder is None:
-        # regular users may not add root folders unless configured otherwise
-        if not filer_settings.FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS:
-            raise PermissionDenied
-    elif not folder.has_add_children_permission(request):
-        # the user does not have the permission to add subfolders
+    if (
+        not request.user.is_superuser
+        and folder is None
+        and not filer_settings.FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS
+        or not request.user.is_superuser
+        and folder is not None
+        and not folder.has_add_children_permission(request)
+    ):
         raise PermissionDenied
-
     if request.method == 'POST':
         new_folder_form = NewFolderForm(request.POST)
         if new_folder_form.is_valid():
@@ -74,58 +73,17 @@ def make_folder(request, folder_id=None):
 
 @login_required
 def paste_clipboard_to_folder(request):
-    if True:
-        # TODO: cleanly remove Clipboard code if it is no longer needed
-        return HttpResponseBadRequest('not implemented anymore')
-
-    if request.method == 'POST':
-        folder = Folder.objects.get(id=request.POST.get('folder_id'))
-        clipboard = Clipboard.objects.get(id=request.POST.get('clipboard_id'))
-        if folder.has_add_children_permission(request):
-            tools.move_files_from_clipboard_to_folder(clipboard, folder)
-            tools.discard_clipboard(clipboard)
-        else:
-            raise PermissionDenied
-    redirect = request.GET.get('redirect_to', '')
-    if not redirect:
-        redirect = request.POST.get('redirect_to', '')
-    return HttpResponseRedirect(
-        '{0}?order_by=-modified_at{1}'.format(
-            redirect,
-            admin_url_params_encoded(request, first_separator='&'),
-        )
-    )
+    # TODO: cleanly remove Clipboard code if it is no longer needed
+    return HttpResponseBadRequest('not implemented anymore')
 
 
 @login_required
 def discard_clipboard(request):
-    if True:
-        # TODO: cleanly remove Clipboard code if it is no longer needed
-        return HttpResponseBadRequest('not implemented anymore')
-
-    if request.method == 'POST':
-        clipboard = Clipboard.objects.get(id=request.POST.get('clipboard_id'))
-        tools.discard_clipboard(clipboard)
-    return HttpResponseRedirect(
-        '{0}{1}'.format(
-            request.POST.get('redirect_to', ''),
-            admin_url_params_encoded(request, first_separator='&'),
-        )
-    )
+    # TODO: cleanly remove Clipboard code if it is no longer needed
+    return HttpResponseBadRequest('not implemented anymore')
 
 
 @login_required
 def delete_clipboard(request):
-    if True:
-        # TODO: cleanly remove Clipboard code if it is no longer needed
-        return HttpResponseBadRequest('not implemented anymore')
-
-    if request.method == 'POST':
-        clipboard = Clipboard.objects.get(id=request.POST.get('clipboard_id'))
-        tools.delete_clipboard(clipboard)
-    return HttpResponseRedirect(
-        '{0}{1}'.format(
-            request.POST.get('redirect_to', ''),
-            admin_url_params_encoded(request, first_separator='&'),
-        )
-    )
+    # TODO: cleanly remove Clipboard code if it is no longer needed
+    return HttpResponseBadRequest('not implemented anymore')

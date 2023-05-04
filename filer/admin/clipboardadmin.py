@@ -135,9 +135,10 @@ def ajax_upload(request, folder_id=None):
             data['original_image'] = file_obj.url
         return JsonResponse(data)
     else:
-        form_errors = '; '.join(['%s: %s' % (
-            field,
-            ', '.join(errors)) for field, errors in list(
-                uploadform.errors.items())
-        ])
-        return JsonResponse({'message': str(form_errors)}, status=422)
+        form_errors = '; '.join(
+            [
+                f"{field}: {', '.join(errors)}"
+                for field, errors in list(uploadform.errors.items())
+            ]
+        )
+        return JsonResponse({'message': form_errors}, status=422)

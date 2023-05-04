@@ -35,21 +35,24 @@ class DumpDataTests(TestCase):
         os.remove(self.filename)
         for f in File.objects.all():
             f.delete()
-        pass
 
     def create_filer_image(self, folder=None):
         file_obj = DjangoFile(open(self.filename, 'rb'), name=self.image_name)
-        image = Image.objects.create(owner=self.superuser,
-                                     original_filename=self.image_name,
-                                     file=file_obj, folder=folder)
-        return image
+        return Image.objects.create(
+            owner=self.superuser,
+            original_filename=self.image_name,
+            file=file_obj,
+            folder=folder,
+        )
 
     def create_filer_file(self, folder=None):
         file_obj = DjangoFile(open(self.filename, 'rb'), name=self.image_name)
-        fileobj = File.objects.create(owner=self.superuser,
-                                      original_filename=self.image_name,
-                                      file=file_obj, folder=folder)
-        return fileobj
+        return File.objects.create(
+            owner=self.superuser,
+            original_filename=self.image_name,
+            file=file_obj,
+            folder=folder,
+        )
 
     def test_dump_data_base(self):
         """

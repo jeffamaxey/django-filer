@@ -33,10 +33,7 @@ def generate_filename_multistorage(instance, filename):
     else:
         upload_to = filer_settings.FILER_PRIVATEMEDIA_UPLOAD_TO
 
-    if callable(upload_to):
-        return upload_to(instance, filename)
-    else:
-        return upload_to
+    return upload_to(instance, filename) if callable(upload_to) else upload_to
 
 
 class MultiStorageFileDescriptor(FileDescriptor):
@@ -60,7 +57,7 @@ class MultiStorageFileDescriptor(FileDescriptor):
         # To prevent recalculating upon reassignment of the same file, update only if value is
         # different than the previous one.
         if prev_assigned and value != previous_file:
-            callback_attr = '{}_data_changed'.format(self.field.name)
+            callback_attr = f'{self.field.name}_data_changed'
             if hasattr(instance, callback_attr):
                 getattr(instance, callback_attr)()
 
@@ -154,12 +151,16 @@ class MultiStorageFileField(easy_thumbnails_fields.ThumbnailerField):
             sha = hashlib.sha1()
             sha.update(payload_file.read())
             if sha.hexdigest() != obj.sha1:
-                warnings.warn('The checksum for "%s" diverges. Check for file consistency!' % obj.original_filename)
+                warnings.warn(
+                    f'The checksum for "{obj.original_filename}" diverges. Check for file consistency!'
+                )
             payload_file.seek(0)
             encoded_string = base64.b64encode(payload_file.read()).decode('utf-8')
             return value, encoded_string
         except IOError:
-            warnings.warn('The payload for "%s" is missing. No such file on disk: %s!' % (obj.original_filename, self.storage.location))
+            warnings.warn(
+                f'The payload for "{obj.original_filename}" is missing. No such file on disk: {self.storage.location}!'
+            )
             return value
 
     def to_python(self, value):

@@ -107,9 +107,7 @@ class BaseImage(File):
         super().save(*args, **kwargs)
 
     def _check_validity(self):
-        if not self.name:
-            return False
-        return True
+        return bool(self.name)
 
     def sidebar_image_ratio(self):
         if self.width:
@@ -184,12 +182,15 @@ class BaseImage(File):
 
     @property
     def icons(self):
-        required_thumbnails = dict(
-            (size, {'size': (int(size), int(size)),
-                    'crop': True,
-                    'upscale': True,
-                    'subject_location': self.subject_location})
-            for size in filer_settings.FILER_ADMIN_ICON_SIZES)
+        required_thumbnails = {
+            size: {
+                'size': (int(size), int(size)),
+                'crop': True,
+                'upscale': True,
+                'subject_location': self.subject_location,
+            }
+            for size in filer_settings.FILER_ADMIN_ICON_SIZES
+        }
         return self._generate_thumbnails(required_thumbnails)
 
     @property
@@ -198,9 +199,10 @@ class BaseImage(File):
 
     @property
     def easy_thumbnails_thumbnailer(self):
-        tn = FilerThumbnailer(
-            file=self.file, name=self.file.name,
+        return FilerThumbnailer(
+            file=self.file,
+            name=self.file.name,
             source_storage=self.file.source_storage,
             thumbnail_storage=self.file.thumbnail_storage,
-            thumbnail_basedir=self.file.thumbnail_basedir)
-        return tn
+            thumbnail_basedir=self.file.thumbnail_basedir,
+        )

@@ -22,8 +22,7 @@ RE_SUBJECT_LOCATION = re.compile(r'^(\d+),(\d+)$')
 def normalize_subject_location(subject_location):
     if subject_location:
         if isinstance(subject_location, str):
-            m = RE_SUBJECT_LOCATION.match(subject_location)
-            if m:
+            if m := RE_SUBJECT_LOCATION.match(subject_location):
                 return (int(m.group(1)), int(m.group(2)))
         else:
             try:
@@ -59,11 +58,7 @@ def scale_and_crop_with_subject_location(im, size, subject_location=False,
     source_x, source_y = [float(v) for v in im.size]
     target_x, target_y = [float(v) for v in size]
 
-    if crop or not target_x or not target_y:
-        scale = max(target_x / source_x, target_y / source_y)
-    else:
-        scale = min(target_x / source_x, target_y / source_y)
-
+    scale = max(target_x / source_x, target_y / source_y)
     # Handle one-dimensional targets.
     if not target_x:
         target_x = source_x * scale

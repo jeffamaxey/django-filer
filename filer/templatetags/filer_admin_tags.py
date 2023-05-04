@@ -55,11 +55,7 @@ def filer_has_permission(context, item, action):
     permission_method = getattr(item, permission_method_name, None)
     request = context.get('request')
 
-    if not permission_method or not request:
-        return False
-    # Call the permission method.
-    # This amounts to calling `item.has_X_permission(request)`
-    return permission_method(request)
+    return permission_method(request) if permission_method and request else False
 
 
 def file_icon_context(file, detail, width, height):
@@ -91,9 +87,9 @@ def file_icon_context(file, detail, width, height):
             opts['size'] = 2 * width, 2 * height
             context['highres_url'] = thumbnailer.get_thumbnail(opts).url
     elif mime_maintype in ['audio', 'font', 'video']:
-        icon_url = staticfiles_storage.url('filer/icons/file-{}.svg'.format(mime_maintype))
+        icon_url = staticfiles_storage.url(f'filer/icons/file-{mime_maintype}.svg')
     elif mime_maintype == 'application' and mime_subtype in ['zip', 'pdf']:
-        icon_url = staticfiles_storage.url('filer/icons/file-{}.svg'.format(mime_subtype))
+        icon_url = staticfiles_storage.url(f'filer/icons/file-{mime_subtype}.svg')
     else:
         icon_url = staticfiles_storage.url('filer/icons/file-unknown.svg')
     context.update(width=width, height=height, icon_url=icon_url)

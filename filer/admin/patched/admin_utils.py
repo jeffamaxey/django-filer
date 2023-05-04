@@ -40,22 +40,20 @@ def get_deleted_objects(objs, opts, user, admin_site, using):
         has_admin = obj.__class__ in admin_site._registry
         opts = obj._meta
 
-        no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
-                                   force_str(obj))
+        no_edit_link = f'{capfirst(opts.verbose_name)}: {force_str(obj)}'
 
         if has_admin:
             try:
-                admin_url = reverse('%s:%s_%s_change'
-                                    % (admin_site.name,
-                                       opts.app_label,
-                                       opts.model_name),
-                                    None, (quote(obj._get_pk_val()),))
+                admin_url = reverse(
+                    f'{admin_site.name}:{opts.app_label}_{opts.model_name}_change',
+                    None,
+                    (quote(obj._get_pk_val()),),
+                )
             except NoReverseMatch:
                 # Change url doesn't exist -- don't display link to edit
                 return no_edit_link
 
-            p = '%s.%s' % (opts.app_label,
-                           get_permission_codename('delete', opts))
+            p = f"{opts.app_label}.{get_permission_codename('delete', opts)}"
             if not user.has_perm(p):
                 perms_needed.add(opts.verbose_name)
             # Display a link to the admin page.
@@ -118,10 +116,7 @@ class NestedObjects(Collector):
         children = []
         for child in self.edges.get(obj, ()):
             children.extend(self._nested(child, seen, format_callback))
-        if format_callback:
-            ret = [format_callback(obj)]
-        else:
-            ret = [obj]
+        ret = [format_callback(obj)] if format_callback else [obj]
         if children:
             ret.append(children)
         return ret

@@ -179,7 +179,7 @@ class Folder(models.Model, mixins.IconsMixin):
 
     @property
     def pretty_logical_path(self):
-        return "/%s" % "/".join([f.name for f in self.logical_path + [self]])
+        return f'/{"/".join([f.name for f in self.logical_path + [self]])}'
 
     @property
     def quoted_logical_path(self):
@@ -202,22 +202,19 @@ class Folder(models.Model, mixins.IconsMixin):
         user = request.user
         if not user.is_authenticated:
             return False
-        elif user.is_superuser:
-            return True
-        elif user == self.owner:
+        elif user.is_superuser or user == self.owner:
             return True
         else:
             if not hasattr(self, "permission_cache") or\
-               permission_type not in self.permission_cache or \
-               request.user.pk != self.permission_cache['user'].pk:
+                   permission_type not in self.permission_cache or \
+                   request.user.pk != self.permission_cache['user'].pk:
                 if not hasattr(self, "permission_cache") or request.user.pk != self.permission_cache['user'].pk:
                     self.permission_cache = {
                         'user': request.user,
                     }
 
                 # This calls methods on the manager i.e. get_read_id_list()
-                func = getattr(FolderPermission.objects,
-                               "get_%s_id_list" % permission_type)
+                func = getattr(FolderPermission.objects, f"get_{permission_type}_id_list")
                 permission = func(user)
                 if permission == "All":
                     self.permission_cache[permission_type] = True
@@ -246,7 +243,7 @@ class Folder(models.Model, mixins.IconsMixin):
             args=(self.pk,))
 
     def __str__(self):
-        return "%s" % (self.name,)
+        return f"{self.name}"
 
     def contains_folder(self, folder_name):
         try:
@@ -352,19 +349,15 @@ class FolderPermission(models.Model):
     objects = FolderPermissionManager()
 
     def __str__(self):
-        if self.folder:
-            name = '%s' % self.folder
-        else:
-            name = 'All Folders'
-
+        name = f'{self.folder}' if self.folder else 'All Folders'
         ug = []
         if self.everybody:
             ug.append('Everybody')
         else:
             if self.group:
-                ug.append("Group: %s" % self.group)
+                ug.append(f"Group: {self.group}")
             if self.user:
-                ug.append("User: %s" % self.user)
+                ug.append(f"User: {self.user}")
         usergroup = " ".join(ug)
         perms = []
         for s in ['can_edit', 'can_read', 'can_add_children']:
@@ -372,11 +365,9 @@ class FolderPermission(models.Model):
             if perm == self.ALLOW:
                 perms.append(s)
             elif perm == self.DENY:
-                perms.append('!%s' % s)
+                perms.append(f'!{s}')
         perms = ', '.join(perms)
-        return "Folder: '%s'->%s [%s] [%s]" % (
-            name, self.get_type_display(),
-            perms, usergroup)
+        return f"Folder: '{name}'->{self.get_type_display()} [{perms}] [{usergroup}]"
 
     def clean(self):
         if self.type == self.ALL and self.folder:

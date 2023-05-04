@@ -78,26 +78,25 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             parent_id = request.POST.get('parent_id', None)
         if parent_id:
             return AddFolderPopupForm
-        else:
-            folder_form = super().get_form(
-                request, obj=None, **kwargs)
+        folder_form = super().get_form(
+            request, obj=None, **kwargs)
 
-            def folder_form_clean(form_obj):
-                cleaned_data = form_obj.cleaned_data
-                folders_with_same_name = self.get_queryset(request).filter(
-                    parent=form_obj.instance.parent,
-                    name=cleaned_data['name'])
-                if form_obj.instance.pk:
-                    folders_with_same_name = folders_with_same_name.exclude(
-                        pk=form_obj.instance.pk)
-                if folders_with_same_name.exists():
-                    raise ValidationError(
-                        'Folder with this name already exists.')
-                return cleaned_data
+        def folder_form_clean(form_obj):
+            cleaned_data = form_obj.cleaned_data
+            folders_with_same_name = self.get_queryset(request).filter(
+                parent=form_obj.instance.parent,
+                name=cleaned_data['name'])
+            if form_obj.instance.pk:
+                folders_with_same_name = folders_with_same_name.exclude(
+                    pk=form_obj.instance.pk)
+            if folders_with_same_name.exists():
+                raise ValidationError(
+                    'Folder with this name already exists.')
+            return cleaned_data
 
-            # attach clean to the default form rather than defining a new form class
-            folder_form.clean = folder_form_clean
-            return folder_form
+        # attach clean to the default form rather than defining a new form class
+        folder_form.clean = folder_form_clean
+        return folder_form
 
     def save_form(self, request, form, change):
         """
@@ -247,10 +246,10 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
                 self.get_queryset(request).get(id=last_folder_id)
             except self.model.DoesNotExist:
                 url = reverse('admin:filer-directory_listing-root')
-                url = "%s%s" % (url, admin_url_params_encoded(request))
+                url = f"{url}{admin_url_params_encoded(request)}"
             else:
                 url = reverse('admin:filer-directory_listing', kwargs={'folder_id': last_folder_id})
-                url = "%s%s" % (url, admin_url_params_encoded(request))
+                url = f"{url}{admin_url_params_encoded(request)}"
             return HttpResponseRedirect(url)
         elif folder_id is None:
             folder = FolderRoot()
@@ -261,9 +260,9 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         # Check actions to see if any are available on this changelist
         actions = self.get_actions(request)
 
-        # Remove action checkboxes if there aren't any actions available.
-        list_display = list(self.list_display)
         if not actions:
+            # Remove action checkboxes if there aren't any actions available.
+            list_display = list(self.list_display)
             try:
                 list_display.remove('action_checkbox')
             except ValueError:
@@ -308,7 +307,7 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             order_by = order_by.split(',')
             order_by = [field for field in order_by
                         if re.sub(r'^-', '', field) in self.order_by_file_fields]
-            if len(order_by) > 0:
+            if order_by:
                 file_qs = file_qs.order_by(*order_by)
 
         folder_children = []
@@ -357,12 +356,11 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             for f in folder_files:
                 if "move-to-clipboard-%d" % (f.id,) in request.POST:
                     clipboard = tools.get_user_clipboard(request.user)
-                    if f.has_edit_permission(request):
-                        tools.move_file_to_clipboard([f], clipboard)
-                        return HttpResponseRedirect(request.get_full_path())
-                    else:
+                    if not f.has_edit_permission(request):
                         raise PermissionDenied
 
+                    tools.move_file_to_clipboard([f], clipboard)
+                    return HttpResponseRedirect(request.get_full_path())
         selected = request.POST.getlist(helpers.ACTION_CHECKBOX_NAME)
         # Actions with no confirmation
         if (
@@ -371,8 +369,9 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             and '_save' not in request.POST
         ):
             if selected:
-                response = self.response_action(request, files_queryset=file_qs, folders_queryset=folder_qs)
-                if response:
+                if response := self.response_action(
+                    request, files_queryset=file_qs, folders_queryset=folder_qs
+                ):
                     return response
             else:
                 msg = _("Items must be selected in order to perform "
@@ -381,15 +380,16 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
 
         # Actions with confirmation
         if (
-            actions and request.method == 'POST'
+            actions
+            and request.method == 'POST'
             and helpers.ACTION_CHECKBOX_NAME in request.POST
             and 'index' not in request.POST
             and '_save' not in request.POST
-        ):
-            if selected:
-                response = self.response_action(request, files_queryset=file_qs, folders_queryset=folder_qs)
-                if response:
-                    return response
+        ) and selected:
+            if response := self.response_action(
+                request, files_queryset=file_qs, folders_queryset=folder_qs
+            ):
+                return response
 
         # Build the action form and populate it with available actions.
         if actions:
@@ -449,13 +449,13 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         # Source: https://github.com/django/django/blob/1.7.1/django/contrib/admin/options.py#L939-L947  flake8: noqa
         def construct_search(field_name):
             if field_name.startswith('^'):
-                return "%s__istartswith" % field_name[1:]
+                return f"{field_name[1:]}__istartswith"
             elif field_name.startswith('='):
-                return "%s__iexact" % field_name[1:]
+                return f"{field_name[1:]}__iexact"
             elif field_name.startswith('@'):
-                return "%s__search" % field_name[1:]
+                return f"{field_name[1:]}__search"
             else:
-                return "%s__icontains" % field_name
+                return f"{field_name}__icontains"
 
         for term in terms:
             filters = models.Q()
@@ -731,8 +731,7 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         if request.POST.get('post'):
             if all_perms_needed:
                 raise PermissionDenied
-            n = files_queryset.count() + folders_queryset.count()
-            if n:
+            if n := files_queryset.count() + folders_queryset.count():
                 # delete all explicitly selected files
                 for f in files_queryset:
                     self.log_deletion(request, f, force_str(f))
@@ -795,11 +794,11 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         has_admin = obj.__class__ in admin_site._registry
         opts = obj._meta
         if has_admin:
-            admin_url = reverse('%s:%s_%s_change'
-                                % (admin_site.name,
-                                   opts.app_label,
-                                   opts.object_name.lower()),
-                                None, (quote(obj._get_pk_val()),))
+            admin_url = reverse(
+                f'{admin_site.name}:{opts.app_label}_{opts.object_name.lower()}_change',
+                None,
+                (quote(obj._get_pk_val()),),
+            )
             p = get_delete_permission(opts)
             if not user.has_perm(p):
                 perms_needed.add(opts.verbose_name)
@@ -808,7 +807,7 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         else:
             # Don't display link to edit, because it either has no
             # admin or is edited inline.
-            return '%s: %s' % (capfirst(opts.verbose_name), force_str(obj))
+            return f'{capfirst(opts.verbose_name)}: {force_str(obj)}'
 
     def _check_copy_perms(self, request, files_queryset, folders_queryset):
         try:
@@ -862,8 +861,14 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             # We do not allow copying/moving back to the folder itself
             enabled = (allow_self or fo != current_folder) and fo.has_add_children_permission(request)
             yield (fo, (mark_safe(("&nbsp;&nbsp;" * level) + force_str(fo)), enabled))
-            for c in self._list_all_destination_folders_recursive(request, folders_queryset, current_folder, fo.children.all(), allow_self, level + 1):
-                yield c
+            yield from self._list_all_destination_folders_recursive(
+                request,
+                folders_queryset,
+                current_folder,
+                fo.children.all(),
+                allow_self,
+                level + 1,
+            )
 
     def _list_all_destination_folders(self, request, folders_queryset, current_folder, allow_self):
         root_folders = self.get_queryset(request).filter(parent__isnull=True).order_by('name')
@@ -898,8 +903,12 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
                 raise PermissionDenied
             # We count only topmost files and folders here
             n = files_queryset.count() + folders_queryset.count()
-            conflicting_names = [folder.name for folder in self.get_queryset(request).filter(parent=destination, name__in=folders_queryset.values('name'))]
-            if conflicting_names:
+            if conflicting_names := [
+                folder.name
+                for folder in self.get_queryset(request).filter(
+                    parent=destination, name__in=folders_queryset.values('name')
+                )
+            ]:
                 messages.error(request, _("Folders with names %s already exist at the selected "
                                           "destination") % ", ".join(conflicting_names))
             elif n:
@@ -1046,7 +1055,7 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         count = itertools.count(1)
         original = name
         while destination.contains_folder(name):
-            name = "%s_%s" % (original, next(count))
+            name = f"{original}_{next(count)}"
         return name
 
     def _copy_folder(self, folder, destination, suffix, overwrite):
@@ -1118,11 +1127,7 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         try:
             selected_destination_folder = int(request.POST.get('destination', 0))
         except ValueError:
-            if current_folder:
-                selected_destination_folder = current_folder.pk
-            else:
-                selected_destination_folder = 0
-
+            selected_destination_folder = current_folder.pk if current_folder else 0
         context = self.admin_site.each_context(request)
         context.update({
             "title": _("Copy files and/or folders"),
@@ -1169,17 +1174,11 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         return to_resize
 
     def _new_subject_location(self, original_width, original_height, new_width, new_height, x, y, crop):
-        # TODO: We could probably do even better, but this method knows nothing
-        # about actual thumbnailing algorithm details.
-        # It's better to reset subject location to the central point of the new
-        # image if the image is being cropped. The originally specified subject
-        # location could be outside of the new image.
         if crop:
             return int(new_width / 2), int(new_height / 2)
-        else:
-            # Calculate scaling factor of the new image compared to old.
-            scale = min(new_width / original_width, new_height / original_height)
-            return int(scale * x), int(scale * y)
+        # Calculate scaling factor of the new image compared to old.
+        scale = min(new_width / original_width, new_height / original_height)
+        return int(scale * x), int(scale * y)
 
     def _resize_image(self, image, form_data):
         original_width = float(image.width)
@@ -1198,8 +1197,7 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         image.file_data_changed()
         image.save()
 
-        subject_location = normalize_subject_location(image.subject_location)
-        if subject_location:
+        if subject_location := normalize_subject_location(image.subject_location):
             (x, y) = subject_location
             x = float(x)
             y = float(y)

@@ -38,10 +38,9 @@ def userperms_for_request(item, request):
     r = []
     ps = ['read', 'edit', 'add_children']
     for p in ps:
-        attr = "has_%s_permission" % p
+        attr = f"has_{p}_permission"
         if hasattr(item, attr):
-            x = getattr(item, attr)(request)
-            if x:
+            if x := getattr(item, attr)(request):
                 r.append(p)
     return r
 
@@ -59,9 +58,7 @@ def popup_pick_type(request):
     # very important to limit the pick_types because the result is marked safe.
     # (injection attacks)
     pick_type = request.GET.get('_pick', request.POST.get('_pick'))
-    if pick_type in ALLOWED_PICK_TYPES:
-        return pick_type
-    return None
+    return pick_type if pick_type in ALLOWED_PICK_TYPES else None
 
 
 def admin_url_params(request, params=None):
@@ -72,8 +69,7 @@ def admin_url_params(request, params=None):
     params = params or {}
     if popup_status(request):
         params[IS_POPUP_VAR] = '1'
-    pick_type = popup_pick_type(request)
-    if pick_type:
+    if pick_type := popup_pick_type(request):
         params['_pick'] = pick_type
     return params
 
@@ -83,9 +79,7 @@ def admin_url_params_encoded(request, first_separator='?', params=None):
     params = urlencode(
         sorted(admin_url_params(request, params=params).items())
     )
-    if not params:
-        return ''
-    return '{0}{1}'.format(first_separator, params)
+    return '{0}{1}'.format(first_separator, params) if params else ''
 
 
 class AdminContext(dict):

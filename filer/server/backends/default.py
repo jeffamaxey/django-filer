@@ -20,7 +20,7 @@ class DefaultServer(ServerBase):
         # the following code is largely borrowed from `django.views.static.serve`
         # and django-filetransfers: filetransfers.backends.default
         if not os.path.exists(fullpath):
-            raise Http404('"%s" does not exist' % fullpath)
+            raise Http404(f'"{fullpath}" does not exist')
         # Respect the If-Modified-Since header.
         statobj = os.stat(fullpath)
         response_params = {'content_type': filer_file.mime_type}

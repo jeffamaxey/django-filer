@@ -10,13 +10,11 @@ class PrimitivePermissionAwareModelAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
-        if hasattr(obj, 'has_edit_permission'):
-            if obj.has_edit_permission(request):
-                return True
-            else:
-                return False
-        else:
-            return True
+        return bool(
+            hasattr(obj, 'has_edit_permission')
+            and obj.has_edit_permission(request)
+            or not hasattr(obj, 'has_edit_permission')
+        )
 
     def has_delete_permission(self, request, obj=None):
         # we don't have a specific delete permission... so we use change
@@ -29,6 +27,7 @@ class PrimitivePermissionAwareModelAdmin(admin.ModelAdmin):
         """
         # Code from django ModelAdmin to determine changelist on the fly
         opts = obj._meta
-        return reverse('admin:%s_%s_changelist' %
-                       (opts.app_label, opts.model_name),
-            current_app=self.admin_site.name)
+        return reverse(
+            f'admin:{opts.app_label}_{opts.model_name}_changelist',
+            current_app=self.admin_site.name,
+        )

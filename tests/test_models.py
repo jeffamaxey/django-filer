@@ -40,10 +40,9 @@ class FilerApiTests(TestCase):
 
     def create_filer_image(self):
         file_obj = DjangoFile(open(self.filename, 'rb'), name=self.image_name)
-        image = Image.objects.create(owner=self.superuser,
-                                     original_filename=self.image_name,
-                                     file=file_obj)
-        return image
+        return Image.objects.create(
+            owner=self.superuser, original_filename=self.image_name, file=file_obj
+        )
 
     def test_create_folder_structure(self):
         create_folder_structure(depth=3, sibling=2, parent=None)
@@ -86,8 +85,10 @@ class FilerApiTests(TestCase):
         file_basename = os.path.basename(image.file.path)
         self.assertEqual(len(icons), len(filer_settings.FILER_ADMIN_ICON_SIZES))
         for size in filer_settings.FILER_ADMIN_ICON_SIZES:
-            self.assertEqual(os.path.basename(icons[size]),
-                             file_basename + '__%sx%s_q85_crop_subsampling-2_upscale.jpg' % (size, size))
+            self.assertEqual(
+                os.path.basename(icons[size]),
+                f'{file_basename}__{size}x{size}_q85_crop_subsampling-2_upscale.jpg',
+            )
 
     def test_access_icons_property(self):
         """Test IconsMixin that calls static on a non-existent file"""
@@ -177,7 +178,7 @@ class FilerApiTests(TestCase):
         self.assertTrue(file_1.file.storage.exists(file_1.file.name))
 
         # check if the thumnails exist
-        thumbnails = [x for x in file_1.file.get_thumbnails()]
+        thumbnails = list(file_1.file.get_thumbnails())
         for tn in thumbnails:
             self.assertTrue(tn.storage.exists(tn.name))
         storage, name = file_1.file.storage, file_1.file.name

@@ -20,15 +20,7 @@ class ImageAdminForm(forms.ModelForm):
                     'Format: "x,y".'))
 
     def sidebar_image_ratio(self):
-        if self.instance:
-            # this is very important. It forces the value to be returned as a
-            # string and always with a "." as separator. If the conversion
-            # from float to string is done in the template, the locale will
-            # be used and in some cases there would be a "," instead of ".".
-            # javascript would parse that to an integer.
-            return '%.6F' % self.instance.sidebar_image_ratio()
-        else:
-            return ''
+        return '%.6F' % self.instance.sidebar_image_ratio() if self.instance else ''
 
     def _set_previous_subject_location(self, cleaned_data):
         subject_location = self.instance.subject_location

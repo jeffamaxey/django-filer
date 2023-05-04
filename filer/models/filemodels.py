@@ -32,7 +32,7 @@ class FileManager(PolymorphicManager):
         return r
 
     def find_duplicates(self, file_obj):
-        return [i for i in self.exclude(pk=file_obj.pk).filter(sha1=file_obj.sha1)]
+        return list(self.exclude(pk=file_obj.pk).filter(sha1=file_obj.sha1))
 
 
 def is_public_default():
@@ -148,11 +148,11 @@ class File(PolymorphicModel, mixins.IconsMixin):
         verbose_name_plural = _("files")
 
     def __str__(self):
-        if self.name in ('', None):
-            text = "%s" % (self.original_filename,)
-        else:
-            text = "%s" % (self.name,)
-        return text
+        return (
+            f"{self.original_filename}"
+            if self.name in ('', None)
+            else f"{self.name}"
+        )
 
     @classmethod
     def matches_file_type(cls, iname, ifile, mime_type):
@@ -255,10 +255,10 @@ class File(PolymorphicModel, mixins.IconsMixin):
         sha = hashlib.sha1()
         self.file.seek(0)
         while True:
-            buf = self.file.read(104857600)
-            if not buf:
+            if buf := self.file.read(104857600):
+                sha.update(buf)
+            else:
                 break
-            sha.update(buf)
         self.sha1 = sha.hexdigest()
         # to make sure later operations can read the whole file
         self.file.seek(0)
@@ -293,8 +293,7 @@ class File(PolymorphicModel, mixins.IconsMixin):
             text = self.original_filename or 'unnamed file'
         else:
             text = self.name
-        text = "%s" % (text,)
-        return text
+        return f"{text}"
 
     def __lt__(self, other):
         return self.label.lower() < other.label.lower()
@@ -394,11 +393,10 @@ class File(PolymorphicModel, mixins.IconsMixin):
         if this file is not in a specific folder return the Special "unfiled"
         Folder object
         """
-        if not self.folder:
-            from .virtualitems import UnsortedImages
-            return UnsortedImages()
-        else:
+        if self.folder:
             return self.folder
+        from .virtualitems import UnsortedImages
+        return UnsortedImages()
 
     @property
     def logical_path(self):

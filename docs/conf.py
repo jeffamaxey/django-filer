@@ -46,14 +46,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'django-filer'
-copyright = '%s, Stefan Foulis' % (datetime.date.today().year,)
+copyright = f'{datetime.date.today().year}, Stefan Foulis'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '.'.join(__version__.split('.')[0:2])
+version = '.'.join(__version__.split('.')[:2])
 # The full version, including alpha/beta/rc tags.
 release = __version__
 

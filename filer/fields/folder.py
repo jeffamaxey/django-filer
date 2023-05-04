@@ -23,8 +23,8 @@ class AdminFolderWidget(ForeignKeyRawIdWidget):
     def render(self, name, value, attrs=None, renderer=None):
         obj = self.obj_for_value(value)
         css_id = attrs.get('id')
-        css_id_folder = "%s_folder" % css_id
-        css_id_description_txt = "%s_description_txt" % css_id
+        css_id_folder = f"{css_id}_folder"
+        css_id_description_txt = f"{css_id}_description_txt"
         if attrs is None:
             attrs = {}
         related_url = None
@@ -39,10 +39,7 @@ class AdminFolderWidget(ForeignKeyRawIdWidget):
             related_url = reverse('admin:filer-directory_listing-last')
         params = self.url_parameters()
         params['_pick'] = 'folder'
-        if params:
-            url = '?' + urlencode(sorted(params.items()))
-        else:
-            url = ''
+        url = f'?{urlencode(sorted(params.items()))}' if params else ''
         if 'class' not in attrs:
             # The JavaScript looks for this hook.
             attrs['class'] = 'vForeignKeyRawIdAdminField'
@@ -53,11 +50,11 @@ class AdminFolderWidget(ForeignKeyRawIdWidget):
         # API to determine the ID dynamically.
         context = {
             'hidden_input': hidden_input,
-            'lookup_url': '%s%s' % (related_url, url),
+            'lookup_url': f'{related_url}{url}',
             'lookup_name': name,
             'span_id': css_id_description_txt,
             'object': obj,
-            'clear_id': '%s_clear' % css_id,
+            'clear_id': f'{css_id}_clear',
             'descid': css_id_description_txt,
             'noimg': 'filer/icons/nofile_32x32.png',
             'foldid': css_id_folder,
@@ -68,7 +65,7 @@ class AdminFolderWidget(ForeignKeyRawIdWidget):
 
     def label_for_value(self, value):
         obj = self.obj_for_value(value)
-        return '&nbsp;<strong>%s</strong>' % truncate_words(obj, 14)
+        return f'&nbsp;<strong>{truncate_words(obj, 14)}</strong>'
 
     def obj_for_value(self, value):
         if not value:
@@ -112,12 +109,10 @@ class FilerFolderField(models.ForeignKey):
     def __init__(self, **kwargs):
         # We hard-code the `to` argument for ForeignKey.__init__
         dfl = get_model_label(self.default_model_class)
-        if "to" in kwargs.keys():  # pragma: no cover
+        if "to" in kwargs:  # pragma: no cover
             old_to = get_model_label(kwargs.pop("to"))
             if old_to.lower() != dfl.lower():
-                msg = "%s can only be a ForeignKey to %s; %s passed" % (
-                    self.__class__.__name__, dfl, old_to
-                )
+                msg = f"{self.__class__.__name__} can only be a ForeignKey to {dfl}; {old_to} passed"
                 warnings.warn(msg, SyntaxWarning)
         kwargs['to'] = dfl
         super().__init__(**kwargs)
@@ -126,6 +121,5 @@ class FilerFolderField(models.ForeignKey):
         defaults = {
             'form_class': self.default_form_class,
             'rel': self.remote_field,
-        }
-        defaults.update(kwargs)
+        } | kwargs
         return super().formfield(**defaults)

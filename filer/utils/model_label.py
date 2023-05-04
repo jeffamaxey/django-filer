@@ -12,7 +12,4 @@ def get_model_label(model):
     if isinstance(model, str):
         return model
     else:
-        return "%s.%s" % (
-            model._meta.app_label,
-            model.__name__
-        )
+        return f"{model._meta.app_label}.{model.__name__}"

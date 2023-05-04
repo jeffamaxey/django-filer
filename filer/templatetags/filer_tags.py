@@ -40,10 +40,10 @@ def filesize(bytes, format='auto1024'):
     """
     format_len = len(format)
     # Check for valid format
-    if format_len in (2, 3):
+    if format_len in {2, 3}:
         if format_len == 3 and format[0] == 'K':
-            format = 'k%s' % format[1:]
-        if not format[-1] == 'B' or format[0] not in filesize_formats:
+            format = f'k{format[1:]}'
+        if format[-1] != 'B' or format[0] not in filesize_formats:
             return bytes
         if format_len == 3 and format[1] != 'i':
             return bytes
@@ -59,10 +59,7 @@ def filesize(bytes, format='auto1024'):
 
     # Auto multiple of 1000 or 1024
     if format.startswith('auto'):
-        if format[4:8] == '1000':
-            base = 1000
-        else:
-            base = 1024
+        base = 1000 if format[4:8] == '1000' else 1024
         logarithm = bytes and math.log(bytes, base) or 0
         index = min(int(logarithm) - 1, len(filesize_formats) - 1)
         if index >= 0:
@@ -83,13 +80,12 @@ def filesize(bytes, format='auto1024'):
         if format.endswith('long'):
             unit = filesize_long_formats.get(unit, '')
             if base == 1024 and unit:
-                unit = '%sbi' % unit[:2]
-            unit = '%sbyte%s' % (unit, bytes != '1' and 's' or '')
+                unit = f'{unit[:2]}bi'
+            unit = f"{unit}byte{bytes != '1' and 's' or ''}"
         else:
-            unit = '%s%s' % (base == 1024 and unit.upper() or unit,
-                             base == 1024 and 'iB' or 'B')
+            unit = f"{base == 1024 and unit.upper() or unit}{base == 1024 and 'iB' or 'B'}"
 
-        return '%s %s' % (bytes, unit)
+        return f'{bytes} {unit}'
 
     if bytes == 0:
         return bytes

@@ -26,16 +26,13 @@ def _recalculate_size(size, index, divisor=0, padding=0,
         new_two = int(size[int(not index)])
 
     new_one = int(new_one)
-    if index:
-        return (new_two, new_one)
-    return new_one, new_two
+    return (new_two, new_one) if index else (new_one, new_two)
 
 
 def _resize(original_size, index, divisor=0, padding=0,
             keep_aspect_ratio=False):
     if isinstance(original_size, str):
-        m = RE_SIZE.match(original_size)
-        if m:
+        if m := RE_SIZE.match(original_size):
             original_size = (int(m.group(1)), int(m.group(2)))
         else:
             return original_size
@@ -129,11 +126,7 @@ def get_css_position(image):
     width = image.width
     height = image.height
 
-    coords = '{}% {}%'.format(
-        percentage(x, width),
-        percentage(y, height)
-    )
-    return coords
+    return f'{percentage(x, width)}% {percentage(y, height)}%'
 
 
 get_css_position = register.filter(get_css_position)

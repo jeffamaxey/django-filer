@@ -16,7 +16,7 @@ class UploadException(Exception):
 
 
 def handle_upload(request):
-    if not request.method == "POST":
+    if request.method != "POST":
         raise UploadException("AJAX request not valid: must be POST")
     if request.is_ajax():
         # the file is stored raw in the request
@@ -41,8 +41,6 @@ def handle_upload(request):
                                      content_length,
                                      None,
                                      None)
-            pass
-
         # For compatibility with low-level network APIs (with 32-bit integers),
         # the chunk size should be < 2^31, but still divisible by 4.
         possible_sizes = [x.chunk_size for x in upload_handlers if x.chunk_size]
@@ -86,15 +84,13 @@ def handle_upload(request):
                 break
 
         for i, handler in enumerate(upload_handlers):
-            file_obj = handler.file_complete(counters[i])
-            if file_obj:
+            if file_obj := handler.file_complete(counters[i]):
                 upload = file_obj
                 break
+    elif len(request.FILES) == 1:
+        upload, filename, is_raw, mime_type = handle_request_files_upload(request)
     else:
-        if len(request.FILES) == 1:
-            upload, filename, is_raw, mime_type = handle_request_files_upload(request)
-        else:
-            raise UploadException("AJAX request not valid: Bad Upload")
+        raise UploadException("AJAX request not valid: Bad Upload")
     return upload, filename, is_raw, mime_type
 
 
@@ -133,8 +129,4 @@ def get_valid_filename(s):
     s = get_valid_filename_django(s)
     filename, ext = os.path.splitext(s)
     filename = slugify(filename)
-    ext = slugify(ext)
-    if ext:
-        return "%s.%s" % (filename, ext)
-    else:
-        return "%s" % (filename,)
+    return f"{filename}.{ext}" if (ext := slugify(ext)) else f"{filename}"

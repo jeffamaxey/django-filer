@@ -6,8 +6,8 @@ from . import views
 
 urlpatterns = [
     re_path(
-        filer_settings.FILER_CANONICAL_URL + r'(?P<uploaded_at>[0-9]+)/(?P<file_id>[0-9]+)/$',  # flake8: noqa
+        f'{filer_settings.FILER_CANONICAL_URL}(?P<uploaded_at>[0-9]+)/(?P<file_id>[0-9]+)/$',
         views.canonical,
-        name='canonical'
-    ),
+        name='canonical',
+    )
 ]

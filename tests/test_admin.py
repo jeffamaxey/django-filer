@@ -315,10 +315,10 @@ class FilerClipboardAdminUrlsTests(TestCase):
         self.assertEqual(Image.objects.count(), 0)
         folder = Folder.objects.create(name='foo')
         file_obj = django.core.files.File(open(self.filename, 'rb'))
-        url = reverse(
-            'admin:filer-ajax_upload',
-            kwargs={'folder_id': folder.pk}
-        ) + '?filename=%s' % self.image_name
+        url = (
+            reverse('admin:filer-ajax_upload', kwargs={'folder_id': folder.pk})
+            + f'?filename={self.image_name}'
+        )
         response = self.client.post(  # noqa
             url,
             data=file_obj.read(),
@@ -353,9 +353,7 @@ class FilerClipboardAdminUrlsTests(TestCase):
     def test_filer_ajax_upload_file_no_folder(self):
         self.assertEqual(Image.objects.count(), 0)
         file_obj = django.core.files.File(open(self.filename, 'rb'))
-        url = reverse(
-            'admin:filer-ajax_upload'
-        ) + '?filename=%s' % self.image_name
+        url = reverse('admin:filer-ajax_upload') + f'?filename={self.image_name}'
         response = self.client.post(  # noqa
             url,
             data=file_obj.read(),
@@ -680,10 +678,10 @@ class FilerBulkOperationsTests(BulkOperationsMixin, TestCase):
         'new_name' should be a plain string, no formatting supported.
         """
         if file_obj is not None:
-            checkbox_name = 'file-{}'.format(file_obj.id)
+            checkbox_name = f'file-{file_obj.id}'
             files = [file_obj]
         elif folder_obj is not None:
-            checkbox_name = 'folder-{}'.format(folder_obj.id)
+            checkbox_name = f'folder-{folder_obj.id}'
             # files inside this folder, non-recursive
             files = File.objects.filter(folder=folder_obj)
         else:
@@ -732,9 +730,9 @@ class FilerDeleteOperationTests(BulkOperationsMixin, TestCase):
         self.assertNotEqual(Image.objects.count(), 0)
         self.assertNotEqual(Folder.objects.count(), 0)
         url = reverse('admin:filer-directory_listing-root')
-        folders = []
-        for folder in FolderRoot().children.all():
-            folders.append('folder-%d' % (folder.id,))
+        folders = [
+            'folder-%d' % (folder.id,) for folder in FolderRoot().children.all()
+        ]
         # this returns the confirmation for the admin action
         response = self.client.post(url, {
             'action': 'delete_files_or_folders',
@@ -760,9 +758,9 @@ class FilerDeleteOperationTests(BulkOperationsMixin, TestCase):
         self.assertNotEqual(File.objects.count(), 0)
         self.assertNotEqual(Image.objects.count(), 0)
         url = reverse('admin:filer-directory_listing', args=(self.folder.id,))
-        folders = []
-        for f in File.objects.filter(folder=self.folder):
-            folders.append('file-%d' % (f.id,))
+        folders = [
+            'file-%d' % (f.id,) for f in File.objects.filter(folder=self.folder)
+        ]
         folders.append('folder-%d' % self.sub_folder1.id)
         response = self.client.post(url, {  # noqa
             'action': 'delete_files_or_folders',
@@ -885,9 +883,14 @@ class FolderListingTest(TestCase):
             item_list = response.context['paginated_items'].object_list
             # user sees all items: FOO, BAR, BAZ, SAMP
             self.assertEqual(
-                set(folder.pk for folder in item_list),
-                set([self.foo_folder.pk, self.bar_folder.pk, self.baz_folder.pk,
-                     self.spam_file.pk]))
+                {folder.pk for folder in item_list},
+                {
+                    self.foo_folder.pk,
+                    self.bar_folder.pk,
+                    self.baz_folder.pk,
+                    self.spam_file.pk,
+                },
+            )
 
     def test_folder_ownership(self):
         with SettingsOverride(filer_settings, FILER_ENABLE_PERMISSIONS=True):
@@ -898,9 +901,7 @@ class FolderListingTest(TestCase):
             # user sees only 1 folder : FOO
             # he doesn't see BAR, BAZ and SPAM because he doesn't own them
             # and no permission has been given
-            self.assertEqual(
-                set(folder.pk for folder in item_list),
-                set([self.foo_folder.pk]))
+            self.assertEqual({folder.pk for folder in item_list}, {self.foo_folder.pk})
 
     def test_with_permission_given_to_folder(self):
         with SettingsOverride(filer_settings, FILER_ENABLE_PERMISSIONS=True):
@@ -918,8 +919,9 @@ class FolderListingTest(TestCase):
             item_list = response.context['paginated_items'].object_list
             # user sees 2 folder : FOO, BAR
             self.assertEqual(
-                set(folder.pk for folder in item_list),
-                set([self.foo_folder.pk, self.bar_folder.pk]))
+                {folder.pk for folder in item_list},
+                {self.foo_folder.pk, self.bar_folder.pk},
+            )
 
     def test_with_permission_given_to_parent_folder(self):
         with SettingsOverride(filer_settings, FILER_ENABLE_PERMISSIONS=True):
@@ -936,9 +938,14 @@ class FolderListingTest(TestCase):
             item_list = response.context['paginated_items'].object_list
             # user sees all items because he has permissions on the parent folder
             self.assertEqual(
-                set(folder.pk for folder in item_list),
-                set([self.foo_folder.pk, self.bar_folder.pk, self.baz_folder.pk,
-                     self.spam_file.pk]))
+                {folder.pk for folder in item_list},
+                {
+                    self.foo_folder.pk,
+                    self.bar_folder.pk,
+                    self.baz_folder.pk,
+                    self.spam_file.pk,
+                },
+            )
 
     def test_search_against_owner(self):
         url = reverse('admin:filer-directory_listing',
@@ -1002,7 +1009,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
     def test_pick_mode_folder_delete(self):
         folder = Folder.objects.create(name='foo')
         base_url = reverse('admin:filer_folder_delete', args=[folder.id])
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)
@@ -1034,7 +1041,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
         parent_folder = Folder.objects.create(name='parent')
         folder = Folder.objects.create(name='foo', parent=parent_folder)
         base_url = reverse('admin:filer_folder_delete', args=[folder.id])
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)
@@ -1068,7 +1075,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
     def test_pick_mode_image_delete(self):
         image = self.create_image(folder=None)
         base_url = image.get_admin_delete_url()
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)
@@ -1100,7 +1107,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
         parent_folder = Folder.objects.create(name='parent')
         image = self.create_image(folder=parent_folder)
         base_url = image.get_admin_delete_url()
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)
@@ -1135,14 +1142,14 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
     def test_pick_mode_image_save(self):
         image = self.create_image(folder=None)
         base_url = image.get_admin_change_url()
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<input type="hidden" name="_pick" value="file"')
         self.assertContains(response, '<input type="hidden" name="_popup" value="1"')
         data = {'_popup': '1'}
-        data.update(model_to_dict(image, all=True))
+        data |= model_to_dict(image, all=True)
         # Django 2.2
         # To catch usage mistakes, the test Client and django.utils.http.urlencode()
         # now raise TypeError if None is passed as a value to encode because None can’t
@@ -1210,7 +1217,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
         parent_folder = Folder.objects.create(name='parent')
         image = self.create_image(folder=parent_folder)
         base_url = image.get_admin_change_url()
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)
@@ -1221,7 +1228,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
         self.assertContains(response,
                             '<input type="hidden" name="_popup" value="1"')
         data = {'_popup': '1'}
-        data.update(model_to_dict(image, all=True))
+        data |= model_to_dict(image, all=True)
         data = {k: v if v is not None else '' for k, v in data.items()}
         response = self.client.post(pick_url, data=data)
         self.assertRedirects(
@@ -1255,7 +1262,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
     def test_pick_mode_folder_save(self):
         folder = Folder.objects.create(name='foo')
         base_url = reverse('admin:filer_folder_change', args=[folder.id])
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)
@@ -1302,7 +1309,7 @@ class FilerAdminContextTests(TestCase, BulkOperationsMixin):
         parent_folder = Folder.objects.create(name='parent')
         folder = Folder.objects.create(name='foo', parent=parent_folder)
         base_url = reverse('admin:filer_folder_change', args=[folder.id])
-        pick_url = base_url + '?_pick=file&_popup=1'
+        pick_url = f'{base_url}?_pick=file&_popup=1'
 
         response = self.client.get(pick_url)
         self.assertEqual(response.status_code, 200)

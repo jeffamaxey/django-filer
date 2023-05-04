@@ -14,8 +14,9 @@ def by_date(instance, filename):
 def randomized(instance, filename):
     import uuid
     uuid_str = str(uuid.uuid4())
-    return os.path.join(uuid_str[0:2], uuid_str[2:4], uuid_str,
-            get_valid_filename(filename))
+    return os.path.join(
+        uuid_str[:2], uuid_str[2:4], uuid_str, get_valid_filename(filename)
+    )
 
 
 class prefixed_factory:
@@ -28,6 +29,8 @@ class prefixed_factory:
             upload_to_str = self.upload_to(instance, filename)
         else:
             upload_to_str = self.upload_to
-        if not self.prefix:
-            return upload_to_str
-        return os.path.join(self.prefix, upload_to_str)
+        return (
+            os.path.join(self.prefix, upload_to_str)
+            if self.prefix
+            else upload_to_str
+        )

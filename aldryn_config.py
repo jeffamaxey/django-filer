@@ -18,12 +18,13 @@ class Form(forms.BaseForm):
         settings['ADDON_URLS'].append(
             'filer.server.urls'
         )
-        settings.setdefault('MEDIA_HEADERS', []).insert(0, (
-            r'filer_public(?:_thumbnails)?/.*',
-            {
-                'Cache-Control': 'public, max-age={}'.format(86400 * 365),
-            },
-        ))
+        settings.setdefault('MEDIA_HEADERS', []).insert(
+            0,
+            (
+                r'filer_public(?:_thumbnails)?/.*',
+                {'Cache-Control': f'public, max-age={86400 * 365}'},
+            ),
+        )
 
         # easy-thumbnails
         settings['THUMBNAIL_QUALITY'] = env('THUMBNAIL_QUALITY', 90)

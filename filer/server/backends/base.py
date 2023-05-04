@@ -28,13 +28,10 @@ class ServerBase:
             filename = os.path.basename(file_obj.path)
         else:
             filename = save_as
-        response['Content-Disposition'] = smart_str(
-            'attachment; filename=%s' % filename)
+        response['Content-Disposition'] = smart_str(f'attachment; filename={filename}')
 
     def size_header(self, response, **kwargs):
-        size = kwargs.get('size', None)
-        # file = kwargs.get('file', None)
-        if size:
+        if size := kwargs.get('size', None):
             response['Content-Length'] = size
         # we should not do this, because it accesses the file. and that might
         # be an expensive operation.

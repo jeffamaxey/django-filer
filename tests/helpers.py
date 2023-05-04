@@ -6,10 +6,7 @@ from filer.utils.compatibility import PILImage, PILImageDraw
 def create_superuser():
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    superuser = User.objects.create_superuser('admin',
-                                              'admin@free.fr',
-                                              'secret')
-    return superuser
+    return User.objects.create_superuser('admin', 'admin@free.fr', 'secret')
 
 
 def create_folder_structure(depth=2, sibling=2, parent=None):
@@ -25,7 +22,7 @@ def create_folder_structure(depth=2, sibling=2, parent=None):
         depth_range.reverse()
         for d in depth_range:
             for s in range(1, sibling + 1):
-                name = "folder: %s -- %s" % (str(d), str(s))
+                name = f"folder: {str(d)} -- {str(s)}"
                 folder = Folder(name=name, parent=parent)
                 folder.save()
                 create_folder_structure(depth=d - 1, sibling=sibling, parent=folder)
@@ -33,8 +30,7 @@ def create_folder_structure(depth=2, sibling=2, parent=None):
 
 def create_clipboard_item(user, file_obj):
     clipboard, was_clipboard_created = Clipboard.objects.get_or_create(user=user)
-    clipboard_item = ClipboardItem(clipboard=clipboard, file=file_obj)
-    return clipboard_item
+    return ClipboardItem(clipboard=clipboard, file=file_obj)
 
 
 def create_image(mode='RGB', size=(800, 600)):

@@ -11,9 +11,8 @@ def unzip(file_obj):
     files = []
     # TODO: implement try-except here
     zip = ZipFile(file_obj)
-    bad_file = zip.testzip()
-    if bad_file:
-        raise Exception('"%s" in the .zip archive is corrupt.' % bad_file)
+    if bad_file := zip.testzip():
+        raise Exception(f'"{bad_file}" in the .zip archive is corrupt.')
     infolist = zip.infolist()
     for zipinfo in infolist:
         if zipinfo.filename.startswith('__'):  # do not process meta files
